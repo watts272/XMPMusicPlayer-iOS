@@ -1,0 +1,33 @@
+name: XMPMusicPlayer
+
+options:
+  bundleIdPrefix: com.xmp
+  deploymentTarget:
+    iOS: "16.0"
+
+settings:
+  base:
+    SWIFT_VERSION: 5.9
+
+targets:
+  XMPMusicPlayer:
+    type: application
+    platform: iOS
+
+    sources:
+      - path: XMPMusicPlayer/App
+
+    resources:
+      - path: XMPMusicPlayer/Web
+      - path: XMPMusicPlayer/Assets.xcassets
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.xmp.musicplayer
+        INFOPLIST_FILE: XMPMusicPlayer/App/Info.plist
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGN_IDENTITY: ""
+        SWIFT_VERSION: 5.9
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
