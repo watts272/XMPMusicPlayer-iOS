@@ -1,0 +1,114 @@
+name: Build Unsigned IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build:
+
+    runs-on: macos-latest
+
+    steps:
+
+      # 1. 下载仓库
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      # 2. 显示系统和 Xcode 信息
+      - name: Show environment
+        run: |
+          sw_vers
+          xcodebuild -version
+          swift --version
+
+
+      # 3. 安装 XcodeGen
+      - name: Install XcodeGen
+        run: |
+          brew install xcodegen
+
+
+      # 4. 根据 project.yml 生成 Xcode 项目
+      - name: Generate Xcode project
+        run: |
+          xcodegen generate
+
+
+      # 5. 查看生成结果
+      - name: Show project
+        run: |
+          ls -la
+          ls -la XMPMusicPlayer.xcodeproj
+
+
+      # 6. 编译 iOS Release
+      - name: Build unsigned app
+        run: |
+          xcodebuild \
+            -project XMPMusicPlayer.xcodeproj \
+            -scheme XMPMusicPlayer \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            clean build
+
+
+      # 7. 找到 .app
+      - name: Find app
+        run: |
+          find build/DerivedData \
+            -name "*.app" \
+            -type d
+
+
+      # 8. 创建 Payload
+      - name: Create Payload
+        run: |
+          mkdir -p build/Payload
+
+          APP=$(find \
+            build/DerivedData/Build/Products/Release-iphoneos \
+            -maxdepth 1 \
+            -name "*.app" \
+            -type d \
+            | head -n 1)
+
+          if [ -z "$APP" ]; then
+            echo "ERROR: .app not found"
+            exit 1
+          fi
+
+          echo "Found app:"
+          echo "$APP"
+
+          cp -R "$APP" build/Payload/
+
+
+      # 9. 打包 IPA
+      - name: Package IPA
+        run: |
+          cd build
+
+          zip -qry \
+            XMPMusicPlayer-unsigned.ipa \
+            Payload
+
+          cd ..
+
+          ls -lh build/XMPMusicPlayer-unsigned.ipa
+
+
+      # 10. 上传 IPA
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+
+        with:
+          name: XMPMusicPlayer-unsigned-IPA
+
+          path: |
+            build/XMPMusicPlayer-unsigned.ipa
